@@ -13,10 +13,11 @@ $team=shift(@ARGV);
 loadteams();
 loadteamresults();
 dumpteamsrpi( $team );
+printnewrpi();
 
 sub printfields{
-	my ( $position, $team, $wlstring, $wl, $rpi, $sos, $hcrpi, $error )=@_;
-	printf( "%4s %-6s %-8s %-8s %-8s %-8s %-8s %-8s\n", $position, $team, $wlstring, $wl, $rpi, $sos, $hcrpi, $error );
+	my ( $position, $team, $conf, $wlstring, $wl, $rpi, $sos, $hcrpi, $diff )=@_;
+	printf( "%4s %-6s %-14s %-8s %-8s %-8s %-8s %-8s %-8s\n", $position, $team, $conf, $wlstring, $wl, $rpi, $sos, $hcrpi, $diff );
 }
 
 sub badSubtract{
@@ -40,11 +41,33 @@ sub loadteams{
 	open( FILE, "teams.csv" ) || die "Failed to open team.csv";
 	while( $line=<FILE> ){
 		chomp $line;
-		($position,$teamcode,$name,$rpi)=split(/,/, $line );
-		$name=uc($name);
-		$teams{$name}=$teamcode;
+		($position,$teamcode,$teamname,$rpi)=split(/,/, $line );
+		$teamname=uc($teamname);
+		$teamnames{$teamcode}=$teamname;
 		$targetrpi{$teamcode}=$rpi*1000;
 		push( @teamsbyposition, $teamcode );
+	}
+	close( FILE );
+
+print "Loadteams\n";
+	my %mappings=( "UCONN" => "CONNECTICUT",
+		"OHIO ST." => "OHIO STATE",
+		"PENN ST." => "PENN STATE"
+ 	);
+	open( FILE, "teamconfs.csv" ) || die "Failed to open teamconfs.csv";
+	while( $line=<FILE> ){
+		chomp $line;
+		($teamname,$conf)=split(/,/, $line );
+		$teamname=uc($teamname);
+print "Checking conf team $teamname\n";
+		if( $mappings{$teamname} ){
+print "Got mapping for $teamname\n";
+			$teamconfs{$mappings{$teamname}}=$conf;
+		}
+		else{
+print "No mapping for $teamname\n";
+			$teamconfs{$teamname}=$conf;
+		}
 	}
 	close( FILE );
 }
@@ -80,7 +103,7 @@ sub dumpteamsrpi{
 	$number=25;
 	$team=shift @_;
 
-	printfields( "Pos", "Team", "WL", "WL%", "RPI", "SOS", "HCRPI", "ERROR" );
+	printfields( "Pos", "Team", "Conference", "WL", "WL%", "RPI", "SOS", "HCRPI", "DIFF" );
 	if($team){
 		calcrpi("", $team);
 	}
@@ -89,6 +112,18 @@ sub dumpteamsrpi{
 			my $team=$teamsbyposition[$n];
 			calcrpi($n+1, $team);
 		}
+	}
+}
+
+sub printnewrpi{
+	my @sorted = sort {$b->{RPI} <=> $a->{RPI}} @rpiresults;
+	my $position=1;
+	my %conferences;
+	foreach $team ( @sorted ){
+		$conf=$$team{"CONF"};
+		$n=$conferences{$conf}+1;
+		printfields( $position++, $$team{"TEAM"}, $$team{"CONF"}." $n", $$team{"WLSTRING"}, $$team{"WL"}, $$team{"RPI"}, $$team{"SOS"}, $$team{"HCRPI"}, $$team{"DIFF"} );
+		$conferences{$conf}=$n;
 	}
 }
 
@@ -182,9 +217,11 @@ sub getopponentsopponentswl{
 }
 
 sub calcrpi{
-	my $position=shift @_;
+	my $oldposition=shift @_;
 	my $teamcode=shift @_;
 
+	( $teamname=$teamnames{$teamcode} ) || die "Failed to find teamname for teamcode:$teamcode\n";
+	( $conf=$teamconfs{$teamname} ) || die "Failed to find teamconf for teamname:$teamname\n";
 	my $wl=getteamwl($teamcode, "");
 	my $wlc=0.25*$wl;
 	# print "$teamcode WL:$wl WLC:$wlc\n";
@@ -203,6 +240,23 @@ sub calcrpi{
 	$wlstring=getteamwlstring($teamcode);
 	$hcrpi=$targetrpi{$teamcode};
 	$rpi=int(0.5+$wlc + $owlc + $oowlc);
-	$error=$rpi-$hcrpi;
-	printfields( $position, $teamcode, $wlstring, $wl, $rpi, $sos, $hcrpi, $error );
+	$diff=$rpi-$hcrpi;
+
+	saverpi( $oldposition, $teamcode, $conf, $wlstring, $wl, $rpi, $sos, $hcrpi, $diff );
+}
+
+sub saverpi{
+	my ( $oldposition, $team, $conf, $wlstring, $wl, $rpi, $sos, $hcrpi, $diff )=@_;
+	my %result = (
+		"OLDPOSITION"=> $oldposition,
+		"TEAM"=> $team,
+		"CONF"=> $conf,
+		"WLSTRING"=> $wlstring,
+		"WL"=> $wl,
+		"RPI"=> $rpi,
+		"SOS"=> $sos,
+		"HCRPI"=> $hcrpi,
+		"DIFF"=> $diff,
+	);
+	push( @rpiresults, \%result );
 }
