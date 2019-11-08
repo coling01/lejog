@@ -1,5 +1,9 @@
 #!/usr/bin/perl
-
+# 
+# Script that will pull down the teams list ( into teams.csv ) and each teams result file ( into results folder )
+# Will skip any teams that already have a file in the results folder.
+# Thus ... To refresh the team(s) results, remove the file(s) from the results folder
+#
 use URI;
 use LWP::Simple 'get';
 

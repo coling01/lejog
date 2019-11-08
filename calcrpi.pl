@@ -1,13 +1,9 @@
 #!/usr/bin/perl
 
-# Slows down a lot but makes no difference :(
-#use bignum;
-
 # Calculate RPI for a team based on 
-# 25% WL
-# 50% of opponents winning percentage ( excluding matches including this team )
-# 25% of opponents opponents winning percentage ( excluding matches including this team )
-
+# 25% WL ( sum of wins / sum of wins+losses )
+# 50% of OPPSWL ( opponents winning percentage excluding matches including the team being calculated )
+# 25% of OPPSOPPSWL ( opponents opponents winning percentage excluding matches including this team being calculated )
 $team=shift(@ARGV);
 
 setteamconfs();
@@ -19,14 +15,6 @@ printnewrpi();
 sub printfields{
 	my ( $position, $team, $conf, $wlstring, $wl, $rpi, $sos, $hcrpi, $diff )=@_;
 	printf( "%4s %-6s %-14s %-8s %-8s %-8s %-8s %-8s %-8s\n", $position, $team, $conf, $wlstring, $wl, $rpi, $sos, $hcrpi, $diff );
-}
-
-sub badSubtract{
-	$s1="0.588";
-	$s2="0.596";
-	$diff=$s1 - $s2;
-	print "\n";
-	print "$s1 $s2 $diff\n";
 }
 
 sub round{
@@ -44,20 +32,6 @@ sub loadteams{
 		push( @teamsbyposition, $teamcode );
 	}
 	close( FILE );
-
-	#open( FILE, "teamconfs.csv" ) || die "Failed to open teamconfs.csv";
-	#while( $line=<FILE> ){
-		#chomp $line;
-		#($teamname,$conf)=split(/,/, $line );
-		#$teamname=uc($teamname);
-		#if( $mappings{$teamname} ){
-			#$teamconfs{$mappings{$teamname}}=$conf;
-		#}
-		#else{
-			#$teamconfs{$teamname}=$conf;
-		#}
-	#}
-	#close( FILE );
 }
 
 sub loadteamresults{
