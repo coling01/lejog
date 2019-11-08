@@ -10,6 +10,7 @@
 
 $team=shift(@ARGV);
 
+setteamconfs();
 loadteams();
 loadteamresults();
 dumpteamsrpi( $team );
@@ -29,11 +30,6 @@ sub badSubtract{
 }
 
 sub round{
-	# return nearest(.001, $_[0] );
-
-#	my ($in, $digits)=@_;
-#	my $up=int($in*1000);
-#	return $up/1000;
 	return int($_[0]+0.5);
 }
 
@@ -49,27 +45,19 @@ sub loadteams{
 	}
 	close( FILE );
 
-print "Loadteams\n";
-	my %mappings=( "UCONN" => "CONNECTICUT",
-		"OHIO ST." => "OHIO STATE",
-		"PENN ST." => "PENN STATE"
- 	);
-	open( FILE, "teamconfs.csv" ) || die "Failed to open teamconfs.csv";
-	while( $line=<FILE> ){
-		chomp $line;
-		($teamname,$conf)=split(/,/, $line );
-		$teamname=uc($teamname);
-print "Checking conf team $teamname\n";
-		if( $mappings{$teamname} ){
-print "Got mapping for $teamname\n";
-			$teamconfs{$mappings{$teamname}}=$conf;
-		}
-		else{
-print "No mapping for $teamname\n";
-			$teamconfs{$teamname}=$conf;
-		}
-	}
-	close( FILE );
+	#open( FILE, "teamconfs.csv" ) || die "Failed to open teamconfs.csv";
+	#while( $line=<FILE> ){
+		#chomp $line;
+		#($teamname,$conf)=split(/,/, $line );
+		#$teamname=uc($teamname);
+		#if( $mappings{$teamname} ){
+			#$teamconfs{$mappings{$teamname}}=$conf;
+		#}
+		#else{
+			#$teamconfs{$teamname}=$conf;
+		#}
+	#}
+	#close( FILE );
 }
 
 sub loadteamresults{
@@ -259,4 +247,87 @@ sub saverpi{
 		"DIFF"=> $diff,
 	);
 	push( @rpiresults, \%result );
+}
+
+sub setteamconfs{
+	%teamconfs=(
+"NORTH CAROLINA"=>"ACC",
+"MARYLAND"=>"BIG TEN",
+"VIRGINIA"=>"ACC",
+"CONNECTICUT"=>"BIG EAST",
+"DUKE"=>"ACC",
+"LOUISVILLE"=>"ACC",
+"BOSTON COLLEGE"=>"ACC",
+"SYRACUSE"=>"ACC",
+"PRINCETON"=>"IVY LEAGUE",
+"IOWA"=>"BIG TEN",
+"DELAWARE"=>"CAA",
+"MICHIGAN"=>"BIG TEN",
+"SAINT JOSEPH'S"=>"ATLANTIC 10",
+"NORTHWESTERN"=>"BIG TEN",
+"OLD DOMINION"=>"BIG EAST",
+"RUTGERS"=>"BIG TEN",
+"HARVARD"=>"IVY LEAGUE",
+"STANFORD"=>"AMERICA EAST",
+"WAKE FOREST"=>"ACC",
+"LIBERTY"=>"BIG EAST",
+"MONMOUTH"=>"AMERICA EAST",
+"WILLIAM & MARY"=>"CAA",
+"OHIO STATE"=>"BIG TEN",
+"PENN STATE"=>"BIG TEN",
+"CORNELL"=>"IVY LEAGUE",
+"FAIRFIELD"=>"NEC",
+"PROVIDENCE"=>"BIG EAST",
+"AMERICAN"=>"PATRIOT",
+"JAMES MADISON"=>"CAA",
+"ALBANY (NY)"=>"AMERICA EAST",
+"LAFAYETTE"=>"PATRIOT",
+"RICHMOND"=>"ATLANTIC 10",
+"PENN"=>"IVY LEAGUE",
+"KENT ST."=>"MAC",
+"NEW HAMPSHIRE"=>"AMERICA EAST",
+"MICHIGAN ST."=>"BIG TEN",
+"NORTHEASTERN"=>"CAA",
+"MASSACHUSETTS"=>"ATLANTIC 10",
+"CALIFORNIA"=>"AMERICA EAST",
+"MIAMI (OH)"=>"MAC",
+"MAINE"=>"AMERICA EAST",
+"UC DAVIS"=>"AMERICA EAST",
+"COLUMBIA"=>"IVY LEAGUE",
+"UMASS LOWELL"=>"AMERICA EAST",
+"BOSTON U."=>"PATRIOT",
+"BUCKNELL"=>"PATRIOT",
+"VCU"=>"ATLANTIC 10",
+"VILLANOVA"=>"BIG EAST",
+"RIDER"=>"NEC",
+"LOCK HAVEN"=>"ATLANTIC 10",
+"APPALACHIAN ST."=>"MAC",
+"OHIO"=>"MAC",
+"INDIANA"=>"BIG TEN",
+"LONGWOOD"=>"MAC",
+"VERMONT"=>"AMERICA EAST",
+"TEMPLE"=>"BIG EAST",
+"DREXEL"=>"CAA",
+"YALE"=>"IVY LEAGUE",
+"HOFSTRA"=>"CAA",
+"BROWN"=>"IVY LEAGUE",
+"QUINNIPIAC"=>"BIG EAST",
+"GEORGETOWN"=>"BIG EAST",
+"DARTMOUTH"=>"IVY LEAGUE",
+"BALL ST."=>"MAC",
+"LIU"=>"NEC",
+"HOLY CROSS"=>"PATRIOT",
+"SAINT FRANCIS (PA)"=>"ATLANTIC 10",
+"LA SALLE"=>"ATLANTIC 10",
+"LEHIGH"=>"PATRIOT",
+"TOWSON"=>"CAA",
+"SACRED HEART"=>"NEC",
+"COLGATE"=>"PATRIOT",
+"DAVIDSON"=>"ATLANTIC 10",
+"CENTRAL MICH."=>"MAC",
+"WAGNER"=>"NEC",
+"BRYANT"=>"NEC",
+"MERRIMACK"=>"NEC",
+"SAINT LOUIS"=>"ATLANTIC 10",
+);
 }
