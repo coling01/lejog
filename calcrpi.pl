@@ -127,25 +127,31 @@ $count++;
 				}
 			}
 		}
-		if( $level == 1 ){
-			printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "WL", $count, $exclude, $team, $opp, $wl, $wins, $losses);
-		}
-		elsif( $level == 2){
-			printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "OPPWL", $count, $exclude, $team, $opp, $wl, $wins, $losses);
-		}
-		elsif( $level == 3){
-			printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "OPPOPPWL", $count, $exclude, $team, $opp, $wl, $wins, $losses);
-		}
-		else {
-			exiterror "Bad level $level!\n";
+		if( $debug ){
+			if( $level == 1 ){
+				printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "WL", $count, $exclude, $team, $opp, $wl, $wins, $losses);
+			}
+			elsif( $level == 2){
+				printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "OPPWL", $count, $exclude, $team, $opp, $wl, $wins, $losses);
+			}
+			elsif( $level == 3){
+				printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "OPPOPPWL", $count, $exclude, $team, $opp, $wl, $wins, $losses);
+			}
+			else {
+				exiterror "Bad level $level!\n";
+	
+			}
 		}
 	}
 		
-	printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "RESULT", $exclude, $team, $wins, $losses);
+	if( $debug ){	
+		printf( "%10s %6s %6s %10s %10s %4s %3s %3s\n", "RESULT", $exclude, $team, $wins, $losses);
+	}
 	if( $wins+$losses == 0 ) {
 		exiterror "ERROR - No wins or losses for $team. Likely bad or missing data\n";
 	}
-	return int(0.5+1000*$wins/($wins+$losses));
+	my %wl=( wins=>$wins, losses=>$losses );
+	return %wl;
 }
 
 
@@ -181,28 +187,28 @@ sub getteamwlstring{
 
 sub getopponentswl{
 	my $team=shift @_;
-	my $total=0;
-	my $count=0;
+	my $wins=0;
+	my $losses=0;
 	foreach $opp ( sort keys %{$results{$team}} ){
-		$wl=getteamwl($opp, $team, 2);
-		$total+=$wl;
-		$count++;
+		my %wl=getteamwl($opp, $team, 2);
+		$wins+=$wl{"wins"};
+		$losses+=$wl{"losses"};
 	}
-	return int(0.5+$total/$count);
+	return $wins/($wins+$losses);
 }
 
 sub getopponentsopponentswl{
 	my $team=shift @_;
-	my $total=0;
-	my $count=0;
+	my $wins=0;
+	my $losses=0;
 	foreach $opp ( sort keys %{$results{$team}} ){
 		foreach $oppopp ( sort keys %{$results{$opp}} ){
-			$wl=getteamwl($oppopp, $team, 3);
-			$total+=$wl;
-			$count++;
+			my %wl=getteamwl($oppopp, $team, 3);
+			$wins+=$wl{"wins"};
+			$losses+=$wl{"losses"};
 		}
 	}
-	return int(0.5+$total/$count);
+	return $wins/($wins+$losses);
 }
 
 sub calcrpi{
@@ -211,22 +217,23 @@ sub calcrpi{
 
 	( $teamname=$teamnames{$teamcode} ) || die "Failed to find teamname for teamcode:$teamcode\n";
 	( $conf=$teamconfs{$teamname} ) || die "Failed to find teamconf for teamname:$teamname\n";
-	my $wl=getteamwl($teamcode, "", 1);
-	my $wlc=0.25*$wl;
-	# print "$teamcode WL:$wl WLC:$wlc\n";
+	my %wl=getteamwl($teamcode, "", 1);
+	my $wlstring=$wl{"wins"}."-".$wl{"losses"};
+	my $wl=$wl{"wins"}/($wl{"wins"}+$wl{"losses"});
+	my $wlc=int(0.5+1000*0.25*$wl);
+	print "$teamcode WL:$wl WLC:$wlc\n";
 
 	my $owl=getopponentswl($teamcode);
-	my $owlc=0.5*$owl;
-	# print "$teamcode OLW:$owl OWLC:$owlc\n";
+	my $owlc=int(1000*0.5*$owl+0.5);
+	print "$teamcode OLW:$owl OWLC:$owlc\n";
 
 	my $oowl=getopponentsopponentswl($teamcode);
-	my $oowlc=0.25*$oowl;
-	# print "$teamcode OOLW:$oowl OOLWC:$oowlc\n";
+	my $oowlc=int(1000*0.25*$oowl+0.5);
+	print "$teamcode OOLW:$oowl OOLWC:$oowlc\n";
 
 	my $sos=int(0.5+0.666*$owl + 0.333*$oowl);
 	# print "sos:$sos\n";
 
-	$wlstring=getteamwlstring($teamcode);
 	$hcrpi=$targetrpi{$teamcode};
 	$rpi=int(0.5+$wlc + $owlc + $oowlc);
 	$diff=$rpi-$hcrpi;
